@@ -4,4 +4,4 @@ Pillow==10.0.0
 rawpy
 scikit-image==0.21.0
 matplotlib==3.8.0
-pywavelets==1.4.1
+pywavelets
