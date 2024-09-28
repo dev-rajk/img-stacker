@@ -5,12 +5,18 @@ from PIL import Image
 from skimage import exposure, filters
 from skimage.restoration import denoise_tv_chambolle
 from io import BytesIO
+import rawpy  # New library for handling DNG files
 import gc
 
 # Function to load and convert images
 def load_image(image_file):
-    image = Image.open(image_file)
-    return np.array(image)
+    if image_file.type == 'application/x-dng':
+        with rawpy.imread(image_file) as raw:
+            rgb = raw.postprocess()
+            return rgb
+    else:
+        image = Image.open(image_file)
+        return np.array(image)
 
 # Memory-efficient cropping
 def crop_image(image, crop_x1, crop_y1, crop_x2, crop_y2):
@@ -54,7 +60,7 @@ def export_image(image, format='JPEG'):
 st.title("Deep Sky Image Processor with Enhanced Image Manipulation")
 
 # File uploader for images
-image_files = st.file_uploader("Upload Images (JPEG or PNG)", type=["jpeg", "jpg", "png"], accept_multiple_files=True)
+image_files = st.file_uploader("Upload Images (DNG, JPEG or PNG)", type=["dng", "jpeg", "jpg", "png"], accept_multiple_files=True)
 
 if image_files:
     for file in image_files:
@@ -65,21 +71,21 @@ if image_files:
         st.sidebar.title("Image Manipulation Tools")
         
         # Brightness/Contrast
-        brightness = st.sidebar.slider("Brightness", -100.0, 100.0, 1.0)
-        contrast = st.sidebar.slider("Contrast", 0.5, 3.0, 1.0)
+        brightness = st.sidebar.slider("Brightness", -100.0, 100.0, 1.0, key=f"brightness_{file.name}")
+        contrast = st.sidebar.slider("Contrast", 0.5, 3.0, 1.0, key=f"contrast_{file.name}")
 
         # Cropping
         st.sidebar.subheader("Cropping")
-        crop_x1 = st.sidebar.slider("Crop X1", 0, image.shape[1], 0)
-        crop_y1 = st.sidebar.slider("Crop Y1", 0, image.shape[0], 0)
-        crop_x2 = st.sidebar.slider("Crop X2", crop_x1, image.shape[1], image.shape[1])
-        crop_y2 = st.sidebar.slider("Crop Y2", crop_y1, image.shape[0], image.shape[0])
+        crop_x1 = st.sidebar.slider("Crop X1", 0, image.shape[1], 0, key=f"crop_x1_{file.name}")
+        crop_y1 = st.sidebar.slider("Crop Y1", 0, image.shape[0], 0, key=f"crop_y1_{file.name}")
+        crop_x2 = st.sidebar.slider("Crop X2", crop_x1, image.shape[1], image.shape[1], key=f"crop_x2_{file.name}")
+        crop_y2 = st.sidebar.slider("Crop Y2", crop_y1, image.shape[0], image.shape[0], key=f"crop_y2_{file.name}")
 
         # Texture, Clarity, Grain, and Detail enhancements
-        texture_strength = st.sidebar.slider("Texture Strength", 1.0, 3.0, 1.5)
-        clarity_strength = st.sidebar.slider("Clarity Strength", 1.0, 3.0, 1.5)
-        grain_amount = st.sidebar.slider("Grain Amount", 0.0, 0.1, 0.05)
-        detail_strength = st.sidebar.slider("Detail Enhancement Strength", 1.0, 3.0, 1.5)
+        texture_strength = st.sidebar.slider("Texture Strength", 1.0, 3.0, 1.5, key=f"texture_strength_{file.name}")
+        clarity_strength = st.sidebar.slider("Clarity Strength", 1.0, 3.0, 1.5, key=f"clarity_strength_{file.name}")
+        grain_amount = st.sidebar.slider("Grain Amount", 0.0, 0.1, 0.05, key=f"grain_amount_{file.name}")
+        detail_strength = st.sidebar.slider("Detail Enhancement Strength", 1.0, 3.0, 1.5, key=f"detail_strength_{file.name}")
 
         # Apply manipulations sequentially
         manipulated_image = cv2.convertScaleAbs(image, alpha=contrast, beta=brightness)
