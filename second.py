@@ -11,15 +11,18 @@ import gc
 
 # Function to load and convert images
 def load_image(image_file):
-    if image_file.type == 'image/x-dng':  # Adjusted MIME type
-        # Read the raw DNG file
-        raw_data = image_file.read()  # Read as byte stream
-        with rawpy.imread(io.BytesIO(raw_data)) as raw:
-            rgb = raw.postprocess()
-            return rgb
-    else:
-        image = Image.open(image_file)
-        return np.array(image)
+    try:
+        if image_file.type in ['image/x-dng', 'image/DNG']:  # Adjusted MIME types
+            raw_data = image_file.read()  # Read as byte stream
+            with rawpy.imread(io.BytesIO(raw_data)) as raw:
+                rgb = raw.postprocess()
+                return rgb
+        else:
+            image = Image.open(image_file)
+            return np.array(image)
+    except Exception as e:
+        st.error(f"Error loading image {image_file.name}: {e}")
+        return None
 
 # Memory-efficient cropping
 def crop_image(image, crop_x1, crop_y1, crop_x2, crop_y2):
