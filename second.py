@@ -5,13 +5,16 @@ from PIL import Image
 from skimage import exposure, filters
 from skimage.restoration import denoise_tv_chambolle
 from io import BytesIO
-import rawpy  # New library for handling DNG files
+import rawpy
+import io
 import gc
 
 # Function to load and convert images
 def load_image(image_file):
-    if image_file.type == 'application/x-dng':
-        with rawpy.imread(image_file) as raw:
+    if image_file.type == 'image/x-dng':  # Adjusted MIME type
+        # Read the raw DNG file
+        raw_data = image_file.read()  # Read as byte stream
+        with rawpy.imread(io.BytesIO(raw_data)) as raw:
             rgb = raw.postprocess()
             return rgb
     else:
